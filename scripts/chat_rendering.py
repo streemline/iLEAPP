@@ -176,33 +176,32 @@ def render_js_chat(chat_json):
 helper to render body with attachments
 """
 def integrateAtt(rec):
-    if rec["file-path"]:
-        att_type = rec["content-type"].split('/')[0] if rec["content-type"] else 'application'
-        filename = os.path.basename(rec["file-path"])
-        body = rec["message"] if rec["message"] else ''
-        if att_type == 'image':               
-            source = '<img src="{}" width="256" height="256"/>'.format(rec["file-path"])
-        
-        elif att_type == 'audio':
-            source = """
+    if not rec["file-path"]:
+        return rec["message"]
+    att_type = rec["content-type"].split('/')[0] if rec["content-type"] else 'application'
+    filename = os.path.basename(rec["file-path"])
+    body = rec["message"] or ''
+    if att_type == 'audio':
+        source = """
             <audio controls>
               <source src="{0}" type="{1}">
               <p><a href="{0}"></a> </p>
             </audio>
             """.format(rec['file-path'], rec["content-type"])
-        elif att_type == 'video':
-            source = """
+    elif att_type == 'image':
+        source = f'<img src="{rec["file-path"]}" width="256" height="256"/>'
+
+    elif att_type == 'video':
+        source = """
             <video controls width="256">
               <source src="{0}" type="{1}">
               <p><a href="{0}"></a> </p>
             </video>
             """.format(rec['file-path'], rec["content-type"])
-        else:
-            source = '<a href="{}">{}</a>'.format(rec["file-path"],filename)
-        
-        return "\n".join([body,mimeTypeIcon[att_type]+' '+source])
     else:
-        return rec["message"]
+        source = f'<a href="{rec["file-path"]}">{filename}</a>'
+
+    return "\n".join([body,mimeTypeIcon[att_type]+' '+source])
 
 
 """
@@ -223,9 +222,14 @@ def render_chat(df):
     latest_mess = df.groupby("data-name", as_index=False)["data-time"].max()
     df = df.merge(latest_mess, on=["data-name"], how='right', suffixes=["","_latest"]).sort_values(by=['data-time_latest','data-name'], ascending=[False, True])
     df["data-time"] = df["data-time"].dt.strftime('%Y-%m-%d %H:%M:%S')
-    chats = {}
-    for c in df["data-name"].unique():
-        chats[c]=df[df["data-name"] == c][["data-name","from_me","body_to_render","data-time"]].reset_index(drop=True).to_dict(orient='index')
+    chats = {
+        c: df[df["data-name"] == c][
+            ["data-name", "from_me", "body_to_render", "data-time"]
+        ]
+        .reset_index(drop=True)
+        .to_dict(orient='index')
+        for c in df["data-name"].unique()
+    }
 
     json_chat = json.dumps(chats)
     return render_js_chat(json_chat)

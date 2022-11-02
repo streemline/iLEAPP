@@ -14,12 +14,12 @@ def get_Gmail(files_found, report_folder, seeker, wrap_text):
     
     for file_found in files_found:
         file_found = str(file_found)
-        
+
         if file_found.endswith('searchsqlitedb'):
             search_db = file_found
         if file_found.endswith('sqlitedb'):
             main_db = file_found
-        
+
     db = open_sqlite_db_readonly(search_db)
     cursor = db.cursor()
     cursor.execute('''
@@ -35,47 +35,42 @@ def get_Gmail(files_found, report_folder, seeker, wrap_text):
     c2 as 'Message ID'
     from offline_search_content
     ''')
-    
+
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     data_list = []
-    
+
     if usageentries > 0:
         for row in all_rows:
-        
+
             sender = row[1]
             sender_split = [sender_split.strip() for sender_split in sender.split(',')]
-            
-            if len(sender_split) < 2:
-                sender_title = sender_split[0]
-                sender_email = ''
-            else:
-                sender_title = sender_split[0]
-                sender_email = sender_split[1]
 
+            sender_email = '' if len(sender_split) < 2 else sender_split[1]
+            sender_title = sender_split[0]
             data_list.append((row[0], sender_title, sender_email, row[2], row[3], row[4], row[5], row[6], row[7], row[8]))
-                
+
         description = 'Gmail - Offline Search'
         report = ArtifactHtmlReport('Gmail - Offline Search')
         report.start_artifact_report(report_folder, 'Gmail - Offline Search')
         report.add_script()
         data_headers = (
             'Timestamp','Sender Name','Sender Email','Receiver','CC','BCC','Subject','Body','Thread ID','Message ID')  # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-        
+
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
-        tsvname = f'Gmail - Offline Search'
+
+        tsvname = 'Gmail - Offline Search'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
-        tlactivity = f'Gmail - Offline Search'
+
+        tlactivity = 'Gmail - Offline Search'
         timeline(report_folder, tlactivity, data_list, data_headers)
-        
+
     else:
         logfunc('Gmail - Offline Search data available')
-    
+
     db.close()
-    
+
     db = open_sqlite_db_readonly(main_db)
     cursor = db.cursor()
     cursor.execute('''
@@ -87,35 +82,32 @@ def get_Gmail(files_found, report_folder, seeker, wrap_text):
     from label_counts
     order by label_server_perm_id
     ''')
-    
+
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     data_list = []
-    
+
     if usageentries > 0:
-        for row in all_rows:
-        
-            data_list.append((row[0], row[1], row[2], row[3]))
-                
+        data_list.extend((row[0], row[1], row[2], row[3]) for row in all_rows)
         description = 'Gmail - Label Details'
         report = ArtifactHtmlReport('Gmail - Label Details')
         report.start_artifact_report(report_folder, 'Gmail - Label Details')
         report.add_script()
         data_headers = (
             'Label','Unread Count','Total Count','Unseen Count')  # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-        
+
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
-        tsvname = f'Gmail - Label Details'
+
+        tsvname = 'Gmail - Label Details'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
-        tlactivity = f'Gmail - Label Details'
+
+        tlactivity = 'Gmail - Label Details'
         timeline(report_folder, tlactivity, data_list, data_headers)
-        
+
     else:
         logfunc('Gmail - Label Details data available')
-    
+
     db.close()
 
 __artifacts__ = {

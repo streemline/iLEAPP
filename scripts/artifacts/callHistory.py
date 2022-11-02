@@ -3,13 +3,13 @@ from scripts.artifact_report import ArtifactHtmlReport
 from scripts.ilapfuncs import logfunc, tsv, timeline, is_platform_windows, open_sqlite_db_readonly
 
 def get_callHistory(files_found, report_folder, seeker, wrap_text):
-    
+
     for file_found in files_found:
         file_found = str(file_found)
-    
+
         if file_found.endswith('.storedata'):
             break
-    
+
     db = open_sqlite_db_readonly(file_found)
     cursor = db.cursor()
     cursor.execute('''
@@ -42,9 +42,9 @@ def get_callHistory(files_found, report_folder, seeker, wrap_text):
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     data_list = []
-    
+
     if usageentries > 0:
-        
+
         for row in all_rows:
             an = str(row[1])
             an = an.replace("b'", "")
@@ -57,10 +57,10 @@ def get_callHistory(files_found, report_folder, seeker, wrap_text):
         data_headers = ('Timestamp', 'Phone Number', 'Name', 'Answered', 'Call Type', 'Call Direction', 'Call Duration', 'ISO Country Code', 'Location', 'Service Provider')
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Call History'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
+
         tlactivity = 'Call History'
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:

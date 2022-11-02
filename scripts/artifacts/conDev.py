@@ -13,7 +13,7 @@ def get_conDev(files_found, report_folder, seeker, wrap_text):
         data = f.read()
         userComps = ""
 
-        logfunc("Data being interpreted for FRPD is of type: " + str(type(data)))
+        logfunc(f"Data being interpreted for FRPD is of type: {str(type(data))}")
         x = type(data)
         byteArr = bytearray(data)
         userByteArr = bytearray()
@@ -32,15 +32,13 @@ def get_conDev(files_found, report_folder, seeker, wrap_text):
                     x = int(magicOffset) + 157
                     if userByteArr.decode() == "":
                         continue
+                    if flag == 0:
+                        userComps += f"{userByteArr.decode()} - "
+                        flag = 1
                     else:
-                        if flag == 0:
-                            userComps += userByteArr.decode() + " - "
-                            flag = 1
-                        else:
-                            userComps += userByteArr.decode() + "\n"
-                            flag = 0
-                        userByteArr = bytearray()
-                        continue
+                        userComps += userByteArr.decode() + "\n"
+                        flag = 0
+                    userByteArr = bytearray()
                 else:
                     char = data[x]
                     userByteArr.append(char)
@@ -48,15 +46,14 @@ def get_conDev(files_found, report_folder, seeker, wrap_text):
     report = ArtifactHtmlReport('Connected Devices')
     report.start_artifact_report(report_folder, 'Connected Devices')
     report.add_script()
-    data_list = []
-    data_list.append((userComps,))
-    data_headers = ('User & Computer Names', )     
+    data_list = [(userComps, )]
+    data_headers = ('User & Computer Names', )
     report.write_artifact_data_table(data_headers, data_list, file_found)
     report.end_artifact_report()
-    
+
     tsvname = 'Connected Devices'
     tsv(report_folder, data_headers, data_list, tsvname)
-    
+
     return      
     
 __artifacts__ = {

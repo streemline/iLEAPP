@@ -232,7 +232,7 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     healthdb = ''
     source_file_healthdb_secure = ''
     source_file_healthdb = ''
-   
+
     for file_found in files_found:
         file_name = str(file_found)
         if file_name.endswith('healthdb_secure.sqlite'):
@@ -242,10 +242,10 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
         if file_name.endswith('healthdb.sqlite'):
            healthdb = str(file_found)
            source_file_healthdb = file_found.replace(seeker.directory, '')
-   
+
     db = open_sqlite_db_readonly(healthdb_secure)
     cursor = db.cursor()
-    
+
     cursor.execute('''
     SELECT
     DATETIME(SAMPLES.START_DATE + 978307200, 'UNIXEPOCH') AS "START DATE",
@@ -350,10 +350,25 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
-        data_list = []
-        for row in all_rows:
-            data_list.append(
-                (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]))
+        data_list = [
+            (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9],
+                row[10],
+                row[11],
+                row[12],
+                row[13],
+            )
+            for row in all_rows
+        ]
 
         report = ArtifactHtmlReport('Health - Workouts')
         report.start_artifact_report(report_folder, 'Health - Workouts')
@@ -385,26 +400,26 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     sync_provenance
     from data_provenances
     ''')
-    
+
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
         data_list = []
-        
+
         for row in all_rows:
-        
+
             for key, value in OS_dict.items():
                 if str(row[2]) == key:
                     og_os_build = value
                     break
                 else: og_os_build = row[2]
-            
+
             for key2, value2 in OS_dict.items():
                 if str(row[4]) == key2:
                     local_os_build = value2
                     break
                 else: local_os_build = row[4]
-        
+
             data_list.append((row[0], row[1], og_os_build, row[3], local_os_build, row[5], row[6], row[7], row[8], row[9]))
 
         report = ArtifactHtmlReport('Health - Provenances')
@@ -421,9 +436,9 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:
         logfunc('No data available in Health - Provenances')
-    
+
     cursor.execute('''attach database "''' + healthdb + '''" as healthdb ''')
- 
+
     cursor.execute('''
     Select
     datetime(samples.start_date+978307200,'unixepoch') as "Start Date",
@@ -445,14 +460,25 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     left outer join healthdb.source_devices on healthdb.source_devices.ROWID = data_provenances.device_id
     WHERE samples.data_type = 173 AND metadata_keys.key != "_HKPrivateMetadataKeyHeadphoneAudioDataIsTransient"
     ''')
-    
+
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
-        data_list = []
-        for row in all_rows:
-            data_list.append(
-                (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9]))
+        data_list = [
+            (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9],
+            )
+            for row in all_rows
+        ]
 
         report = ArtifactHtmlReport('Health - Headphone Audio Levels')
         report.start_artifact_report(report_folder, 'Health - Headphone Audio Levels')
@@ -469,7 +495,7 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:
         logfunc('No data available in Health - Headphone Audio Levels')
-        
+
     cursor.execute('''
     select
     datetime(samples.start_date+978307200,'unixepoch') as "Start Date",
@@ -489,7 +515,7 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     where samples.data_type in (5,118) and samples.start_date not null
     order by "Start Date" desc
     ''')
-    
+
     heart_rate = ''
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
@@ -500,7 +526,7 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
                 heart_rate = row[4]
             if row[2] == 'Resting Heart Rate':
                 heart_rate = row[3]
-        
+
             data_list.append((row[0], row[1], row[2], heart_rate, row[5], row[6]))
 
         report = ArtifactHtmlReport('Health - Heart Rate')
@@ -518,7 +544,7 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:
         logfunc('No data available in Health - Heart Rate')
-    
+
     cursor.execute('''
     select
     datetime(created_date+978307200,'unixepoch') as "Created Timestamp",
@@ -529,14 +555,14 @@ def get_Health(files_found, report_folder, seeker, wrap_text):
     creator_device
     from ACHAchievementsPlugin_earned_instances
     ''')
-    
+
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
-        data_list = []
-        for row in all_rows:
-        
-            data_list.append((row[0], row[1], row[2], row[3], row[4], row[5]))
+        data_list = [
+            (row[0], row[1], row[2], row[3], row[4], row[5])
+            for row in all_rows
+        ]
 
         report = ArtifactHtmlReport('Health - Achievements')
         report.start_artifact_report(report_folder, 'Health - Achievements')

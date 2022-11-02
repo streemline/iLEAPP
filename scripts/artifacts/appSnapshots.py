@@ -35,7 +35,6 @@ def save_ktx_to_png_if_valid(ktx_path, save_to_path):
 def get_applicationSnapshots(files_found, report_folder, seeker, wrap_text):
     
     slash = '\\' if is_platform_windows() else '/'
-    data_headers = ('App Name', 'Source Path', 'Date Modified', 'Snapshot')
     data_list = [] # Format=  [ [ 'App Name', 'ktx_path', mod_date, 'png_path' ], .. ]
 
     for file_found in files_found:
@@ -51,7 +50,7 @@ def get_applicationSnapshots(files_found, report_folder, seeker, wrap_text):
             else:
                 app_name = parts[-3].split(' ')[0]
 
-            png_path = os.path.join(report_folder, app_name + '_' + parts[-1][:-4] + '.png')
+            png_path = os.path.join(report_folder, f'{app_name}_{parts[-1][:-4]}.png')
             if save_ktx_to_png_if_valid(file_found, png_path):
                 last_modified_date = datetime.datetime.fromtimestamp(os.path.getmtime(file_found))
                 data_list.append([app_name, file_found, last_modified_date, png_path])
@@ -66,15 +65,15 @@ def get_applicationSnapshots(files_found, report_folder, seeker, wrap_text):
                 app_name = app_name[8:]
             #if app_name.endswith('-default'):
             #    app_name = app_name[:-8]
-            dash_pos = app_name.find('-') 
+            dash_pos = app_name.find('-')
             if dash_pos > 0:
-                app_name = app_name[0:dash_pos]
+                app_name = app_name[:dash_pos]
 
-            jpg_path = os.path.join(report_folder, app_name + '_' + parts[-1])
+            jpg_path = os.path.join(report_folder, f'{app_name}_{parts[-1]}')
             if shutil.copy2(file_found, jpg_path):
                 last_modified_date = datetime.datetime.fromtimestamp(os.path.getmtime(file_found))
                 data_list.append([app_name, file_found, last_modified_date, jpg_path])
-    
+
     if len(data_list):
         description = "Snapshots saved by iOS for individual apps appear here. Blank screenshots are excluded here. Dates and times shown are from file modified timestamps"
         report = ArtifactHtmlReport('App Snapshots (screenshots)')
@@ -86,6 +85,7 @@ def get_applicationSnapshots(files_found, report_folder, seeker, wrap_text):
             dir_path, base_name = os.path.split(png_path)
             img_html = '<a href="{1}/{0}"><img src="{1}/{0}" class="img-fluid" style="max-height:300px; max-width:400px"></a>'.format(quote(base_name), quote(report_folder_name))
             data_list_for_report.append( (escape(app_name), escape(ktx_path), mod_date, img_html) )
+        data_headers = ('App Name', 'Source Path', 'Date Modified', 'Snapshot')
         report.write_artifact_data_table(data_headers, data_list_for_report, '', html_escape=False, write_location=False)
         report.end_artifact_report()
 

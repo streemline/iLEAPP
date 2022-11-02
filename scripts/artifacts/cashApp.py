@@ -54,9 +54,10 @@ ORDER BY ZPAYMENT.ZDISPLAYDATE ASC
 
     if len(all_rows) > 0:
         
-        data_list = []
-        for row in all_rows:
-            data_list.append((row[6], row[1], row[2], row[0], row[3], row[5], row[4]))
+        data_list = [
+            (row[6], row[1], row[2], row[0], row[3], row[5], row[4])
+            for row in all_rows
+        ]
 
         report = ArtifactHtmlReport('Transactions')
         report.start_artifact_report(report_folder, 'Transactions')

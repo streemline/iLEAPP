@@ -40,7 +40,7 @@ def get_alarms(files_found, report_folder, seeker, wrap_text):
                                           sleep_alarm_dict['MTAlarmIsSleep'], sleep_alarm_dict['MTAlarmBedtimeDoNotDisturb'],
                                           sleep_alarm_dict['MTAlarmBedtimeFireDate']))
 
-    if len(data_list) > 0:
+    if data_list:
         report = ArtifactHtmlReport('Alarms')
         report.start_artifact_report(report_folder, 'Alarms')
         report.add_script()

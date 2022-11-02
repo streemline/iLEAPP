@@ -32,24 +32,22 @@ def get_bluetoothOther(file_found, report_folder, seeker, wrap_text):
 
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
-    data_list = []    
+    data_list = []
     if usageentries > 0:
-        for row in all_rows:
-            data_list.append((row[0], row[1], row[3]))
-    
+        data_list.extend((row[0], row[1], row[3]) for row in all_rows)
         description = ''
         report = ArtifactHtmlReport('Bluetooth Other LE')
         report.start_artifact_report(report_folder, 'Other LE', description)
         report.add_script()
-        data_headers = ('Name','Address','UUID')     
+        data_headers = ('Name','Address','UUID')
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Bluetooth Other LE'
         tsv(report_folder, data_headers, data_list, tsvname)
     else:
         logfunc('No data available for Bluetooth Other')
-    
+
     db.close()
 
 def get_bluetoothPaired(file_found, report_folder, seeker, wrap_text):
@@ -71,32 +69,34 @@ def get_bluetoothPaired(file_found, report_folder, seeker, wrap_text):
 
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
-    data_list = []    
+    data_list = []
     if usageentries > 0:
-        for row in all_rows:
-            data_list.append((row[0], row[1], row[2], row[3], row[4],row[6]))
-    
+        data_list.extend(
+            (row[0], row[1], row[2], row[3], row[4], row[6])
+            for row in all_rows
+        )
+
         description = ''
         report = ArtifactHtmlReport('Bluetooth Paired LE')
         report.start_artifact_report(report_folder, 'Paired LE', description)
         report.add_script()
-        data_headers = ('UUID','Name','Name Origin','Address','Resolved Address','Last Connection Time')     
+        data_headers = ('UUID','Name','Name Origin','Address','Resolved Address','Last Connection Time')
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Bluetooth Paired LE'
         tsv(report_folder, data_headers, data_list, tsvname)
     else:
         logfunc('No data available for Bluetooth Paired LE')
-    
+
     db.close()
 
 def get_bluetoothPairedReg(file_found, report_folder, seeker, wrap_text):
-    data_list = [] 
     with open(file_found, 'rb') as f:
         plist = plistlib.load(f)
         #print(plist)
     if len(plist) > 0:
+        data_list = []
         for x in plist.items():
             macaddress = x[0]
             #print(x[1])
@@ -105,37 +105,23 @@ def get_bluetoothPairedReg(file_found, report_folder, seeker, wrap_text):
                 lastseen = (datetime.datetime.fromtimestamp(int(lastseen)).strftime('%Y-%m-%d %H:%M:%S'))
             else:
                 lastseen = ''
-            if 'UserNameKey' in x[1]:
-                usernkey = x[1]['UserNameKey']
-            else:
-                usernkey = ''
-                
-            if 'Name' in x[1]:
-                nameu = x[1]['Name']
-            else: 
-                nameu = ''
-            if 'DeviceIdProduct' in x[1]:
-                deviceid = x[1]['DeviceIdProduct']
-            else:
-                deviceid = ''
-            if 'DefaultName' in x[1]:
-                defname = x[1]['DefaultName']
-            else:
-                defname = ''
-
+            usernkey = x[1]['UserNameKey'] if 'UserNameKey' in x[1] else ''
+            nameu = x[1]['Name'] if 'Name' in x[1] else ''
+            deviceid = x[1]['DeviceIdProduct'] if 'DeviceIdProduct' in x[1] else ''
+            defname = x[1]['DefaultName'] if 'DefaultName' in x[1] else ''
             data_list.append((lastseen, macaddress, usernkey, nameu, deviceid, defname))
-            
+
         description = ''
         report = ArtifactHtmlReport('Bluetooth Paired')
         report.start_artifact_report(report_folder, 'Paired', description)
         report.add_script()
-        data_headers = ('Last Seen Time','MAC Address','Name Key','Name','Device Product ID','Default Name' )     
+        data_headers = ('Last Seen Time','MAC Address','Name Key','Name','Device Product ID','Default Name' )
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Bluetooth Paired'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
+
         tlactivity = 'Bluetooth Paired'
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:

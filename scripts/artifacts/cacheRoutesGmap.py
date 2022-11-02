@@ -28,8 +28,8 @@ def get_cacheRoutesGmap(files_found, report_folder, seeker, wrap_text):
                     data_list.append((datetime_time, lat, lon, file_found))
                 except:
                     pass    
-            
-    if len(data_list) > 0:
+
+    if data_list:
         description = 'Google Maps Cache Routes'
         report = ArtifactHtmlReport('Locations')
         report.start_artifact_report(report_folder, 'Google Maps Cache Routes', description)
@@ -37,10 +37,10 @@ def get_cacheRoutesGmap(files_found, report_folder, seeker, wrap_text):
         data_headers = ('Timestamp','Latitude','Longitude','Source File')
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Google Maps Cache Routes'
         tsv(report_folder, data_headers, data_list, tsvname)
-    
+
         kmlactivity = 'Google Maps Cache Routes'
         kmlgen(report_folder, kmlactivity, data_list, data_headers)
 

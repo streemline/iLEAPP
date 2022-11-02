@@ -9,13 +9,13 @@ from scripts.ilapfuncs import logfunc, logdevinfo, timeline, tsv, is_platform_wi
 def hexify_byte(byte_to_convert):
     to_return = hex(byte_to_convert).replace('0x','')
     if len(to_return) < 2:
-        to_return = "0" + to_return
+        to_return = f"0{to_return}"
 
     return to_return
 
 def _bytes_to_mac_address(encoded_bytes):
     to_return = ''
-    to_return = hexify_byte(encoded_bytes[0]) + ":" + hexify_byte(encoded_bytes[1]) + ":"
+    to_return = f"{hexify_byte(encoded_bytes[0])}:{hexify_byte(encoded_bytes[1])}:"
     to_return = to_return + hexify_byte(encoded_bytes[2]) + ":" + hexify_byte(encoded_bytes[3]) + ":"
     to_return = to_return + hexify_byte(encoded_bytes[4]) + ":" + hexify_byte(encoded_bytes[5])
 
@@ -66,9 +66,12 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
                     if 'networkUsage' in known_network:
                         net_usage = str(known_network['networkUsage'])
 
-                    if '80211D_IE' in known_network:
-                        if 'IE_KEY_80211D_COUNTRY_CODE' in known_network['80211D_IE']:
-                            country_code = str(known_network['80211D_IE']['IE_KEY_80211D_COUNTRY_CODE'])
+                    if (
+                        '80211D_IE' in known_network
+                        and 'IE_KEY_80211D_COUNTRY_CODE'
+                        in known_network['80211D_IE']
+                    ):
+                        country_code = str(known_network['80211D_IE']['IE_KEY_80211D_COUNTRY_CODE'])
 
                     if 'lastUpdated' in known_network:
                         last_updated = str(known_network['lastUpdated'])
@@ -86,7 +89,7 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
                         enabled = str(known_network['enabled'])
 
                     if 'WPS_PROB_RESP_IE' in known_network:
-                    
+
                         if 'IE_KEY_WPS_DEV_NAME' in known_network['WPS_PROB_RESP_IE']: 
                             device_name = known_network['WPS_PROB_RESP_IE']['IE_KEY_WPS_DEV_NAME']
                         if 'IE_KEY_WPS_MANUFACTURER' in known_network['WPS_PROB_RESP_IE']: 
@@ -98,7 +101,7 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
 
                     if 'CARPLAY_NETWORK' in known_network:
                         carplay = str(known_network['CARPLAY_NETWORK'])
-                    
+
                     known_data_list.append([ssid,
                                             bssid, 
                                             net_usage, 
@@ -121,20 +124,20 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
 
             if 'com.apple.wifi.known-networks.plist' in file_found:
                 known_files.append(file_found)
+                last_auto_joined = ''
+                country_code = ''
+                device_name = ''
+                manufacturer = ''
+                serial_number = ''
+                model_name = ''
+                enabled = ''
                 for network_key in deserialized:
                     known_network = deserialized[network_key]
                     ssid = ''
                     bssid = ''
                     last_updated = ''
-                    last_auto_joined = ''
                     wnpmd = ''
                     net_usage = ''
-                    country_code = ''
-                    device_name = ''
-                    manufacturer = ''
-                    serial_number = ''
-                    model_name = ''
-                    enabled = ''
                     last_joined = ''
                     add_reason = ''
                     bundle = ''
@@ -232,10 +235,10 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
                             private_mac_value = str(_bytes_to_mac_address(scanned_network['PRIVATE_MAC_ADDRESS']['PRIVATE_MAC_ADDRESS_VALUE']))
                         if 'PRIVATE_MAC_ADDRESS_VALID' in scanned_network['PRIVATE_MAC_ADDRESS']:
                             private_mac_valid = str(scanned_network['PRIVATE_MAC_ADDRESS']['PRIVATE_MAC_ADDRESS_VALID'])
-                    
+
                     scanned_data_list.append([ssid, bssid, added_at, last_joined, last_updated, private_mac_in_use, private_mac_value, private_mac_valid, in_known_networks, file_found]) 
-            
-    if len(known_data_list) > 0:
+
+    if known_data_list:
         description = 'WiFi known networks data. Dates are taken straight from the source plist.'
         report = ArtifactHtmlReport('Locations')
         report.start_artifact_report(report_folder, 'WiFi Known Networks', description)
@@ -243,14 +246,14 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
         data_headers = ['SSID','BSSID','Network Usage','Country Code','Device Name','Manufacturer','Serial Number','Model Name','Last Joined','Last Auto Joined','System Joined','User Joined','Last Updated','Enabled','WiFi Network Password Modification Date','Carplay Network','Add Reason','Bundle ID','File']
         report.write_artifact_data_table(data_headers, known_data_list, ', '.join(known_files))
         report.end_artifact_report()
-        
+
         tsvname = 'WiFi Known Networks'
         tsv(report_folder, data_headers, known_data_list, tsvname)
-        
+
         tlactivity = 'WiFi Known Networks'
         timeline(report_folder, tlactivity, known_data_list, data_headers)
-            
-    if len(scanned_data_list) > 0:
+
+    if scanned_data_list:
         description = 'WiFi networks scanned while using fake ("private") MAC address. Dates are taken straight from the source plist.'
         report = ArtifactHtmlReport('Locations')
         report.start_artifact_report(report_folder, 'WiFi Networks Scanned (private)', description)
@@ -258,10 +261,10 @@ def get_appleWifiPlist(files_found, report_folder, seeker, wrap_text):
         data_headers = ['SSID','BSSID','Added At','Last Joined','Last Updated','MAC Used For Network','Private MAC Computed For Network','MAC Valid','In Known Networks','File']
         report.write_artifact_data_table(data_headers, scanned_data_list, ', '.join(scanned_files))
         report.end_artifact_report()
-        
+
         tsvname = 'WiFi Networks Scanned (private)'
         tsv(report_folder, data_headers, scanned_data_list, tsvname)
-        
+
         tlactivity = 'WiFi Networks Scanned (private)'
         timeline(report_folder, tlactivity, scanned_data_list, data_headers)
 

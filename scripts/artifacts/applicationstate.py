@@ -41,10 +41,10 @@ def get_applicationstate(files_found, report_folder, seeker, wrap_text):
                     plist = biplist.readPlist(plist_file_object)
             else:
                 try:
-                    plist = nd.deserialize_plist(plist_file_object)                    
+                    plist = nd.deserialize_plist(plist_file_object)
                 except (nd.DeserializeError, nd.biplist.NotBinaryPlistException, nd.biplist.InvalidPlistException,
                         nd.plistlib.InvalidFileException, nd.ccl_bplist.BplistError, ValueError, TypeError, OSError, OverflowError) as ex:
-                    logfunc(f'Failed to read plist for {row[0]}, error was:' + str(ex))
+                    logfunc(f'Failed to read plist for {row[0]}, error was:{str(ex)}')
             if plist:
                 if type(plist) is dict:
                     var1 = plist.get('bundleIdentifier', '')
@@ -54,16 +54,20 @@ def get_applicationstate(files_found, report_folder, seeker, wrap_text):
                     if row[2]:
                         snap_info_list.append((var1, var2, var3, row[2]))
                 else:
-                    logfunc(f'For {row[0]} Unexpected type "' + str(type(plist)) + '" found as plist root, can\'t process')
+                    logfunc(
+                        f'For {row[0]} Unexpected type "{str(type(plist))}'
+                        + '" found as plist root, can\'t process'
+                    )
+
             else:
                 logfunc(f'For {row[0]}, plist could not be read!')
         report = ArtifactHtmlReport('Application State')
         report.start_artifact_report(report_folder, 'Application State DB')
         report.add_script()
-        data_headers = ('Bundle ID','Bundle Path','Sandbox Path')     
+        data_headers = ('Bundle ID','Bundle Path','Sandbox Path')
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Application State'
         tsv(report_folder, data_headers, data_list, tsvname)
     else:

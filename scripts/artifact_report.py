@@ -68,8 +68,8 @@ class ArtifactHtmlReport:
         if (not self.report_file):
             raise ValueError('Output report file is closed/unavailable!')
 
-        num_entries = len(data_list)
         if write_total:
+            num_entries = len(data_list)
             self.write_minor_header(f'Total number of entries: {num_entries}', 'h6')
         if write_location:
             if is_platform_windows():
@@ -82,26 +82,65 @@ class ArtifactHtmlReport:
 
         if table_responsive:
             self.report_file.write("<div class='table-responsive'>")
-        
+
         table_head = '<table id="{}" class="table table-striped table-bordered table-xsm" cellspacing="0" {}>'\
-                     '<thead>'.format(table_id, (f'style="{table_style}"') if table_style else '')
+                         '<thead>'.format(table_id, (f'style="{table_style}"') if table_style else '')
         self.report_file.write(table_head)
-        self.report_file.write('<tr>' + ''.join( ('<th class="th-sm">{}</th>'.format(html.escape(str(x))) for x in data_headers) ) + '</tr>')
+        self.report_file.write(
+            '<tr>'
+            + ''.join(
+                f'<th class="th-sm">{html.escape(str(x))}</th>'
+                for x in data_headers
+            )
+            + '</tr>'
+        )
+
         self.report_file.write('</thead><tbody>')
 
         if html_escape:
             for row in data_list:
                 if html_no_escape:
-                    self.report_file.write('<tr>' + ''.join( ('<td>{}</td>'.format(html.escape(str(x) if x not in [None, 'N/A'] else '')) if h not in html_no_escape else '<td>{}</td>'.format(str(x) if x not in [None, 'N/A'] else '') for x,h in zip(row, data_headers)) )  + '</tr>')
+                    self.report_file.write(
+                        '<tr>'
+                        + ''.join(
+                            f"<td>{html.escape(str(x) if x not in [None, 'N/A'] else '')}</td>"
+                            if h not in html_no_escape
+                            else f"<td>{str(x) if x not in [None, 'N/A'] else ''}</td>"
+                            for x, h in zip(row, data_headers)
+                        )
+                        + '</tr>'
+                    )
+
                 else:
-                    self.report_file.write('<tr>' + ''.join( ('<td>{}</td>'.format(html.escape(str(x) if x not in [None, 'N/A'] else '')) for x in row) ) + '</tr>')
+                    self.report_file.write(
+                        '<tr>'
+                        + ''.join(
+                            f"<td>{html.escape(str(x) if x not in [None, 'N/A'] else '')}</td>"
+                            for x in row
+                        )
+                        + '</tr>'
+                    )
+
         else:
             for row in data_list:
-                self.report_file.write('<tr>' + ''.join( ('<td>{}</td>'.format(str(x) if x not in [None, 'N/A'] else '') for x in row) ) + '</tr>')
-        
+                self.report_file.write(
+                    '<tr>'
+                    + ''.join(
+                        f"<td>{str(x) if x not in [None, 'N/A'] else ''}</td>"
+                        for x in row
+                    )
+                    + '</tr>'
+                )
+
+
         self.report_file.write('</tbody>')
         if cols_repeated_at_bottom:
-            self.report_file.write('<tfoot><tr>' + ''.join( ('<th>{}</th>'.format(html.escape(str(x))) for x in data_headers) ) + '</tr></tfoot>')
+            self.report_file.write(
+                '<tfoot><tr>'
+                + ''.join(f'<th>{html.escape(str(x))}</th>' for x in data_headers)
+                + '</tr></tfoot>'
+            )
+
         self.report_file.write('</table>')
         if table_responsive:
             self.report_file.write("</div>")

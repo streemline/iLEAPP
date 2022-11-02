@@ -11,13 +11,13 @@ from scripts.ilapfuncs import logfunc, tsv, timeline, is_platform_windows, open_
 def get_geodApplications(files_found, report_folder, seeker, wrap_text):
 	for file_found in files_found:
 		file_found = str(file_found)
-		
+
 		if file_found.endswith('.db'):
 			break
-	
+
 	db = open_sqlite_db_readonly(file_found)
 	cursor = db.cursor()
-	
+
 	if does_table_exist(db, 'mkcount'):
 		query = "SELECT count_type, app_id, createtime FROM mkcount"
 	elif does_table_exist(db, 'dailycounts'):
@@ -26,7 +26,7 @@ def get_geodApplications(files_found, report_folder, seeker, wrap_text):
 	cursor.execute(query)
 
 	all_rows = cursor.fetchall()
-	
+
 	usageentries = len(all_rows)
 	data_list = []
 	if usageentries > 0:
@@ -42,7 +42,7 @@ def get_geodApplications(files_found, report_folder, seeker, wrap_text):
 
 		tsvname = 'Geolocation Applications'
 		tsv(report_folder, data_headers, data_list, tsvname)
-		
+
 		tlactivity = 'Geolocation Applications'
 		timeline(report_folder, tlactivity, data_list, data_headers)
 

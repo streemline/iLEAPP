@@ -11,13 +11,13 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
     
     for file_found in files_found:
         file_found = str(file_found)
-        
+
         if not file_found.endswith('DataStore'):
             continue
-        
+
         db = open_sqlite_db_readonly(file_found)
         cursor = db.cursor()
-            
+
         cursor.execute('''
         select
         datetime(contact_reg_data_timestamp/1000000, 'unixepoch'),
@@ -27,7 +27,7 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
         datetime(contact_sync_date/1000000, 'unixepoch')
         from contact
         ''')
-        
+
         all_rows = cursor.fetchall()
         usageentries = len(all_rows)
         if usageentries > 0:
@@ -36,21 +36,18 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Google Duo - Contacts')
             report.add_script()
             data_headers = ('Registration Date','Name','ID','Number Label','Sync Date') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4]))
-
+            data_list = [(row[0],row[1],row[2],row[3],row[4]) for row in all_rows]
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Google Duo - Contacts'
+
+            tsvname = 'Google Duo - Contacts'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Google Duo - Contacts'
+
+            tlactivity = 'Google Duo - Contacts'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('Google Duo - Contacts data available')
-            
+
         cursor.execute('''
         select
         datetime(call_history.call_history_timestamp, 'unixepoch'),
@@ -69,7 +66,7 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
         from call_history
         left join contact on call_history.call_history_other_user_id = contact.contact_id
         ''')
-        
+
         all_rows = cursor.fetchall()
         usageentries = len(all_rows)
         if usageentries > 0:
@@ -78,21 +75,22 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Google Duo - Call History')
             report.add_script()
             data_headers = ('Timestamp','Local User ID','Remote User ID','Contact Name','Call Duration','Call Direction','Video Call?') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4],row[5],row[6]))
+            data_list = [
+                (row[0], row[1], row[2], row[3], row[4], row[5], row[6])
+                for row in all_rows
+            ]
 
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Google Duo - Call History'
+
+            tsvname = 'Google Duo - Call History'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Google Duo - Call History'
+
+            tlactivity = 'Google Duo - Call History'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('Google Duo - Call History data available')
-            
+
         cursor.execute('''
         select
         datetime(media_clip_creation_date/1000000, 'unixepoch'),
@@ -110,11 +108,11 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
         media_clip_transferred_size
         from media_clip_v2
         ''')
-        
+
         all_rows = cursor.fetchall()
         usageentries = len(all_rows)
         data_list = []
-        
+
         if usageentries > 0:
             for row in all_rows:
                 
@@ -128,37 +126,37 @@ def get_googleDuo(files_found, report_folder, seeker, wrap_text):
                 content_size = row[7]
                 transferred_size = row[8]
                 thumb = ''
-                
-                clip_name = str(message_id) + '.png'
-                print(clip_name)    
+
+                clip_name = f'{str(message_id)}.png'
+                print(clip_name)
                 #Check for Clips
                 for match in files_found:
                     if clip_name in match:
                         shutil.copy2(match, report_folder)
                         data_file_name = os.path.basename(match)
                         thumb = f'<img src="{report_folder}/{data_file_name}" width="300"></img>'
-      
+
                 data_list.append((clip_creation, clip_message, clip_viewed, local_id, clip_direction ,text_rep, message_id, content_size, transferred_size, thumb))
-            
+
             description = 'Google Duo - Clips'
             report = ArtifactHtmlReport('Google Duo - Clips')
             report.start_artifact_report(report_folder, 'Google Duo - Clips')
             report.add_script()
             data_headers = (
                 'Creation Date', 'Message Date', 'Viewed Date', 'Local User ID', 'Clip Direction','Text Representation', 'Message ID','Content Size', 'Transferred Size', 'Clip')  # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            
+
             report.write_artifact_data_table(data_headers, data_list, file_found, html_no_escape=['Clip'])
             report.end_artifact_report()
-            
-            tsvname = f'Google Duo - Clips'
+
+            tsvname = 'Google Duo - Clips'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Google Duo - Clips'
+
+            tlactivity = 'Google Duo - Clips'
             timeline(report_folder, tlactivity, data_list, data_headers)
-            
+
         else:
             logfunc('Google Duo - Clips data available')    
-            
+
         db.close()
         return
 

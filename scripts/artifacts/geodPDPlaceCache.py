@@ -11,10 +11,10 @@ from scripts.ilapfuncs import logfunc, tsv, timeline, is_platform_windows, strin
 def get_geodPDPlaceCache(files_found, report_folder, seeker, wrap_text):
 	for file_found in files_found:
 		file_found = str(file_found)
-		
+
 		if file_found.endswith('.db'):
 			break
-		
+
 	db = open_sqlite_db_readonly(file_found)
 	if does_table_exist(db, 'pdplacelookup'):
 		query = ("""
@@ -26,7 +26,7 @@ def get_geodPDPlaceCache(files_found, report_folder, seeker, wrap_text):
 		logfunc()
 	cursor = db.cursor()
 	cursor.execute(query)
-	
+
 
 	all_rows = cursor.fetchall()
 	usageentries = len(all_rows)
@@ -45,7 +45,7 @@ def get_geodPDPlaceCache(files_found, report_folder, seeker, wrap_text):
 
 		tsvname = 'Geolocation PD Place Caches'
 		tsv(report_folder, data_headers, data_list, tsvname)
-		
+
 		tlactivity = 'Geolocation PD Place Caches'
 		timeline(report_folder, tlactivity, data_list, data_headers)
 

@@ -10,7 +10,7 @@ from scripts.ilapfuncs import logfunc, tsv, timeline, is_platform_windows
 
 
 def get_appItunesmeta(files_found, report_folder, seeker, wrap_text):
-    data_list = []       
+    data_list = []
     for file_found in files_found:
         file_found = str(file_found)
 
@@ -20,7 +20,7 @@ def get_appItunesmeta(files_found, report_folder, seeker, wrap_text):
                     plist = plistlib.load(fp)
                 else:
                     plist = biplist.readPlist(fp)
-                
+
                 purchasedate = plist.get('com.apple.iTunesStore.downloadInfo', {}).get('purchaseDate', '')
                 bundleid = plist.get('softwareVersionBundleId', '')
                 itemname = plist.get('itemName', '')
@@ -33,7 +33,7 @@ def get_appItunesmeta(files_found, report_folder, seeker, wrap_text):
                 sourceapp = plist.get('sourceApp', '')
                 sideloaded = plist.get('sideLoadedDeviceBasedVPP', '')
                 variantid = plist.get('variantID', '')
-                
+
                 p = pathlib.Path(file_found)
                 parent = p.parent
 
@@ -44,10 +44,10 @@ def get_appItunesmeta(files_found, report_folder, seeker, wrap_text):
                         install_date = deserialized_plist.get('installDate', '')
                 else:
                     install_date = ''
-        
+
                 data_list.append((install_date, purchasedate, bundleid, itemname, artistname, versionnum, downloadedby, genre, factoryinstall, appreleasedate, sourceapp, sideloaded, variantid, parent))   
 
-    if len(data_list) > 0:
+    if data_list:
         fileloc = 'See source file location column'
         description = 'iTunes & Bundle ID Metadata contents for apps'
         report = ArtifactHtmlReport('Apps - Itunes & Bundle Metadata')
@@ -56,10 +56,10 @@ def get_appItunesmeta(files_found, report_folder, seeker, wrap_text):
         data_headers = ('Installed Date', 'App Purchase Date','Bundle ID', 'Item Name', 'Artist Name', 'Version Number', 'Downloaded by', 'Genre', 'Factory Install', 'App Release Date', 'Source App', 'Sideloaded?', 'Variant ID', 'Source File Location')     
         report.write_artifact_data_table(data_headers, data_list, fileloc)
         report.end_artifact_report()
-        
+
         tsvname = 'Apps - Itunes Bundle Metadata'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
+
         tlactivity = 'Apps - Itunes Bundle Metadata'
         timeline(report_folder, tlactivity, data_list, data_headers)
     else:

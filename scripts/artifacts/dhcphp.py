@@ -16,28 +16,26 @@ def get_dhcphp(files_found, report_folder, seeker, wrap_text):
         for line in filefrom:
             cline = line.strip()
             if cline == "{":
-                reportval = reportval + ("<table><tr><td>Key</td><td>Values</td></tr>")
+                reportval = f"{reportval}<table><tr><td>Key</td><td>Values</td></tr>"
             elif cline == "}":
-                reportval = reportval +("</table>")
+                reportval = f"{reportval}</table>"
                 data_list.append((reportval,))
                 reportval = ''
-            # elif cline == '':
-            # 	f.write('<br>')
             else:
                 ll = cline.split("=")
-                reportval = reportval +(f"<tr><td>{ll[0]}</td>")
-                reportval = reportval +(f"<td>{ll[1]}</td></tr>")
-       
-        
-    
-    if len(data_list) > 0:
+                reportval = f"{reportval}<tr><td>{ll[0]}</td>"
+                reportval = f"{reportval}<td>{ll[1]}</td></tr>"
+                       
+                        
+
+    if data_list:
         report = ArtifactHtmlReport('DHCP Hotspot Clients')
         report.start_artifact_report(report_folder, 'Hotspot Clients')
         report.add_script()
         data_headers = ('Hotspot Clients',)   
         report.write_artifact_data_table(data_headers, data_list, file_found, html_escape=False)
         report.end_artifact_report()
-        
+
         tsvname = 'DHCP Hotspot Clients'
         tsv(report_folder, data_headers, data_list, tsvname)
     else:

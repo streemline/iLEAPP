@@ -7,10 +7,10 @@ from scripts.ilapfuncs import logfunc, tsv, timeline, is_platform_windows, open_
 def get_addressBook(files_found, report_folder, seeker, wrap_text):
     for file_found in files_found:
         file_found = str(file_found)
-    
+
         if file_found.endswith('.sqlitedb'):
             break
-    
+
     db = open_sqlite_db_readonly(file_found)
     cursor = db.cursor()
     cursor.execute('''
@@ -38,7 +38,7 @@ def get_addressBook(files_found, report_folder, seeker, wrap_text):
                 try:
                     numbers = row[1].split(" +")
                     number = numbers[1].split(" ")
-                    phone_number = "+{}".format(number[0])
+                    phone_number = f"+{number[0]}"
                 except:
                     phone_number = row[1]
             else:

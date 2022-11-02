@@ -26,19 +26,17 @@ def get_accs(files_found, report_folder, seeker, wrap_text):
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
-        data_list = []
-        for row in all_rows:
-            data_list.append((row[0],row[1],row[2],row[3],row[4],row[5]))                
+        data_list = [(row[0],row[1],row[2],row[3],row[4],row[5]) for row in all_rows]
         report = ArtifactHtmlReport('Account Data')
         report.start_artifact_report(report_folder, 'Account Data')
         report.add_script()
-        data_headers = ('Timestamp','Account Desc.','Username','Description','Identifier','Bundle ID' )     
+        data_headers = ('Timestamp','Account Desc.','Username','Description','Identifier','Bundle ID' )
         report.write_artifact_data_table(data_headers, data_list, file_found)
         report.end_artifact_report()
-        
+
         tsvname = 'Account Data'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
+
         tlactivity = 'Account Data'
         timeline(report_folder, tlactivity, data_list, data_headers)
 

@@ -20,13 +20,13 @@ def main():
                         help='Text file list of artifact paths')
     parser.add_argument('-w', '--wrap_text', required=False, action="store_false",
                         help='do not wrap text for output of data files')
-    
+
     loader = plugin_loader.PluginLoader()
 
     print(f"Info: {len(loader)} plugins loaded.")
-    
+
     args = parser.parse_args()
-    
+
     if args.artifact_paths:
         print('Artifact path list generation started.')
         print('')
@@ -47,25 +47,21 @@ def main():
         input_path = args.input_path
         extracttype = args.t
 
-        if args.wrap_text is None:
-            wrap_text = True
-        else:
-            wrap_text = args.wrap_text 
-        
+        wrap_text = True if args.wrap_text is None else args.wrap_text
         if args.output_path is None:
             parser.error('No OUTPUT folder path provided')
             return
         else:
             output_path = os.path.abspath(args.output_path)
-        
+
         if output_path is None:
             parser.error('No OUTPUT folder selected. Run the program again.')
             return
-            
+
         if input_path is None:
             parser.error('No INPUT file or folder selected. Run the program again.')
             return
-        
+
         if args.t is None:
             parser.error('No INPUT file or folder selected. Run the program again.')
             return
@@ -73,7 +69,7 @@ def main():
         if not os.path.exists(input_path):
             parser.error('INPUT file/folder does not exist! Run the program again.')
             return
-        
+
         if not os.path.exists(output_path):
             parser.error('OUTPUT folder does not exist! Run the program again.')
             return  
@@ -94,7 +90,7 @@ def crunch_artifacts(
         loader: plugin_loader.PluginLoader):
     start = process_time()
     start_wall = perf_counter()
- 
+
     logfunc('Processing started. Please wait. This may take a few minutes...')
 
     logfunc('\n--------------------------------------------------------------------------------------')
@@ -103,7 +99,7 @@ def crunch_artifacts(
     logfunc('By: Alexis Brignoni | @AlexisBrignoni | abrignoni.com')
     logfunc('By: Yogesh Khatri   | @SwiftForensics | swiftforensics.com')
     logdevinfo()
-    
+
     seeker = None
     try:
         if extracttype == 'fs':
@@ -130,83 +126,83 @@ def crunch_artifacts(
         return False
 
     # Now ready to run
-    logfunc(f'Artifact categories to parse: {str(len(plugins))}')
+    logfunc(f'Artifact categories to parse: {len(plugins)}')
     logfunc(f'File/Directory selected: {input_path}')
     logfunc('\n--------------------------------------------------------------------------------------')
 
-    log = open(os.path.join(out_params.report_folder_base, 'Script Logs', 'ProcessedFilesLog.html'), 'w+', encoding='utf8')
-    nl = '\n' #literal in order to have new lines in fstrings that create text files
-    log.write(f'Extraction/Path selected: {input_path}<br><br>')
-    
-    categories_searched = 0
-    # Special processing for iTunesBackup Info.plist as it is a seperate entity, not part of the Manifest.db. Seeker won't find it
-    if extracttype == 'itunes':
-        info_plist_path = os.path.join(input_path, 'Info.plist')
-        if os.path.exists(info_plist_path):
-            # process_artifact([info_plist_path], 'iTunesBackupInfo', 'Device Info', seeker, out_params.report_folder_base)
-            #plugin.method([info_plist_path], out_params.report_folder_base, seeker, wrap_text)
-            loader["iTunesBackupInfo"].method([info_plist_path], out_params.report_folder_base, seeker, wrap_text)
-            #del search_list['lastBuild'] # removing lastBuild as this takes its place
-            print([info_plist_path])  # TODO Remove special consideration for itunes? Merge into main search
-        else:
-            logfunc('Info.plist not found for iTunes Backup!')
-            log.write('Info.plist not found for iTunes Backup!')
-        categories_searched += 1
-        GuiWindow.SetProgressBar(categories_searched * ratio)
+    with open(os.path.join(out_params.report_folder_base, 'Script Logs', 'ProcessedFilesLog.html'), 'w+', encoding='utf8') as log:
+        nl = '\n' #literal in order to have new lines in fstrings that create text files
+        log.write(f'Extraction/Path selected: {input_path}<br><br>')
 
-    # Search for the files per the arguments
-    for plugin in plugins:
-        artifact_pretty_name = plugin.name
-        if isinstance(plugin.search, list) or isinstance(plugin.search, tuple):
-            search_regexes = plugin.search
-        else:
-            search_regexes = [plugin.search]
-        files_found = []
-        for artifact_search_regex in search_regexes:
-            found = seeker.search(artifact_search_regex)
-            if not found:
-                log.write(f'No files found for {plugin.name} -> {artifact_search_regex}<br><br>')
+        categories_searched = 0
+        # Special processing for iTunesBackup Info.plist as it is a seperate entity, not part of the Manifest.db. Seeker won't find it
+        if extracttype == 'itunes':
+            info_plist_path = os.path.join(input_path, 'Info.plist')
+            if os.path.exists(info_plist_path):
+                # process_artifact([info_plist_path], 'iTunesBackupInfo', 'Device Info', seeker, out_params.report_folder_base)
+                #plugin.method([info_plist_path], out_params.report_folder_base, seeker, wrap_text)
+                loader["iTunesBackupInfo"].method([info_plist_path], out_params.report_folder_base, seeker, wrap_text)
+                #del search_list['lastBuild'] # removing lastBuild as this takes its place
+                print([info_plist_path])  # TODO Remove special consideration for itunes? Merge into main search
             else:
-                for pathh in found:
-                    if pathh.startswith('\\\\?\\'):
-                        pathh = pathh[4:]
-                    log.write(f'Files for {artifact_search_regex} located at {pathh}<br><br>')
-                files_found.extend(found)
-        if files_found:
-            logfunc('{} [{}] artifact started'.format(plugin.name, plugin.module_name))
-            category_folder = os.path.join(out_params.report_folder_base, plugin.category)
-            if not os.path.exists(category_folder):
+                logfunc('Info.plist not found for iTunes Backup!')
+                log.write('Info.plist not found for iTunes Backup!')
+            categories_searched += 1
+            GuiWindow.SetProgressBar(categories_searched * ratio)
+
+            # Search for the files per the arguments
+        for plugin in plugins:
+            artifact_pretty_name = plugin.name
+            if isinstance(plugin.search, (list, tuple)):
+                search_regexes = plugin.search
+            else:
+                search_regexes = [plugin.search]
+            files_found = []
+            for artifact_search_regex in search_regexes:
+                if found := seeker.search(artifact_search_regex):
+                    for pathh in found:
+                        if pathh.startswith('\\\\?\\'):
+                            pathh = pathh[4:]
+                        log.write(f'Files for {artifact_search_regex} located at {pathh}<br><br>')
+                    files_found.extend(found)
+                else:
+                    log.write(f'No files found for {plugin.name} -> {artifact_search_regex}<br><br>')
+            if files_found:
+                logfunc(f'{plugin.name} [{plugin.module_name}] artifact started')
+                category_folder = os.path.join(out_params.report_folder_base, plugin.category)
+                if not os.path.exists(category_folder):
+                    try:
+                        os.mkdir(category_folder)
+                    except (FileExistsError, FileNotFoundError) as ex:
+                        logfunc(
+                            f'Error creating {plugin.name} report directory at path {category_folder}'
+                        )
+
+                        logfunc(f'Error was {str(ex)}')
+                        continue  # cannot do work
                 try:
-                    os.mkdir(category_folder)
-                except (FileExistsError, FileNotFoundError) as ex:
-                    logfunc('Error creating {} report directory at path {}'.format(plugin.name, category_folder))
-                    logfunc('Error was {}'.format(str(ex)))
-                    continue  # cannot do work
-            try:
-                plugin.method(files_found, category_folder, seeker, wrap_text)
-            except Exception as ex:
-                logfunc('Reading {} artifact had errors!'.format(plugin.name))
-                logfunc('Error was {}'.format(str(ex)))
-                logfunc('Exception Traceback: {}'.format(traceback.format_exc()))
-                continue  # nope
+                    plugin.method(files_found, category_folder, seeker, wrap_text)
+                except Exception as ex:
+                    logfunc(f'Reading {plugin.name} artifact had errors!')
+                    logfunc(f'Error was {str(ex)}')
+                    logfunc(f'Exception Traceback: {traceback.format_exc()}')
+                    continue  # nope
 
-            logfunc('{} [{}] artifact completed'.format(plugin.name, plugin.module_name))
-            logfunc('')
+                logfunc(f'{plugin.name} [{plugin.module_name}] artifact completed')
+                logfunc('')
 
-        categories_searched += 1
-        GuiWindow.SetProgressBar(categories_searched * ratio)
-    log.close()
-
+            categories_searched += 1
+            GuiWindow.SetProgressBar(categories_searched * ratio)
     logfunc('')
     logfunc('Processes completed.')
     end = process_time()
     end_wall = perf_counter()
     run_time_secs =  end - start
     run_time_HMS = strftime('%H:%M:%S', gmtime(run_time_secs))
-    logfunc("Processing time = {}".format(run_time_HMS))
+    logfunc(f"Processing time = {run_time_HMS}")
     run_time_secs =  end_wall - start_wall
     run_time_HMS = strftime('%H:%M:%S', gmtime(run_time_secs))
-    logfunc("Processing time (wall)= {}".format(run_time_HMS))
+    logfunc(f"Processing time (wall)= {run_time_HMS}")
 
     logfunc('')
     logfunc('Report generation started.')

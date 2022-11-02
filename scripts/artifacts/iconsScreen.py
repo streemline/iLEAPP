@@ -13,7 +13,7 @@ def get_iconsScreen(files_found, report_folder, seeker, wrap_text):
     if version.parse(iOSversion) >= version.parse("14"):
         logfunc(f'iOS Screen artifact not compatible with iOS {iOSversion}')
         return
-    
+
     data_list = []
     data_pre_list = []
     file_found = str(files_found[0])
@@ -25,40 +25,40 @@ def get_iconsScreen(files_found, report_folder, seeker, wrap_text):
             elif key == "iconLists":
                 icon = val
 
-        for x in range(0, len(icon)):
+        for x in range(len(icon)):
             page = icon[x]
-            htmlstring = (f"<table><tr>")
-            htmlstring = htmlstring + (f'<td colspan="4"> Icons screen #{x}</td>')
-            for y in range(0, len(page)):
+            htmlstring = "<table><tr>"
+            htmlstring = f'{htmlstring}<td colspan="4"> Icons screen #{x}</td>'
+            for y in range(len(page)):
                 rows = page[y]
                 if (y == 0) or (y % 4 == 0):
-                    htmlstring = htmlstring + ("</tr><tr>")
-                    
+                    htmlstring = f"{htmlstring}</tr><tr>"
+
                 if isinstance(rows, dict):
                     var = rows
                     foldername = var['displayName'] # TODO throws an error if key not found.
                     rows = (f'Folder: {foldername}')
                     bundlesinfolder = var['iconLists'][0]
                     for items in bundlesinfolder:
-                        rows = rows + '<br>' + items
-                
-                htmlstring = htmlstring + (f"<td width = 25%>{rows}</td>")
-            htmlstring = htmlstring + ("</tr></table>")
+                        rows = f'{rows}<br>{items}'
+
+                htmlstring = f"{htmlstring}<td width = 25%>{rows}</td>"
+            htmlstring = f"{htmlstring}</tr></table>"
             data_list.append((htmlstring,))
 
         htmlstring = ''
-        htmlstring = (f'<table><tr> <td colspan="4"> Icons bottom bar</td></tr><tr>')
-        for x in range(0, len(bbar)):
-            htmlstring = htmlstring +(f"<td width = 25%>{bbar[x]}</td>")
-        htmlstring = htmlstring +("</tr></table>")
+        htmlstring = '<table><tr> <td colspan="4"> Icons bottom bar</td></tr><tr>'
+        for x in range(len(bbar)):
+            htmlstring = f"{htmlstring}<td width = 25%>{bbar[x]}</td>"
+        htmlstring = f"{htmlstring}</tr></table>"
         data_list.append((htmlstring,))
 
-        logfunc("Screens: " + str(len(icon)))
+        logfunc(f"Screens: {len(icon)}")
 
-        report = ArtifactHtmlReport(f'Apps per screen')
-        report.start_artifact_report(report_folder, f'Apps per screen')
+        report = ArtifactHtmlReport('Apps per screen')
+        report.start_artifact_report(report_folder, 'Apps per screen')
         report.add_script()
-        data_headers = ((f'Apps per Screens',))     
+        data_headers = ('Apps per Screens', )
         report.write_artifact_data_table(data_headers, data_list, file_found, html_escape=False)
         report.end_artifact_report()
      

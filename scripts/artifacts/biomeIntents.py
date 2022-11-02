@@ -15,7 +15,7 @@ def utf8_in_extended_ascii(input_string, *, raise_on_unexpected=False):
     multibytes_expected = 0
     multibyte_buffer = []
     mis_encoded_utf8_present = False
-    
+
     def handle_bad_data(index, character):
         if not raise_on_unexpected: # not raising, so we dump the buffer into output and append this character
             output.extend(multibyte_buffer)
@@ -27,7 +27,7 @@ def utf8_in_extended_ascii(input_string, *, raise_on_unexpected=False):
             multibytes_expected = 0
         else:
             raise ValueError(f"Expected multibyte continuation at index: {index}")
-            
+
     for idx, c in enumerate(input_string):
         code_point = ord(c)
         if code_point <= 0x7f or code_point > 0xf4:  # ASCII Range data or higher than you get for mis-encoded utf-8:
@@ -44,7 +44,7 @@ def utf8_in_extended_ascii(input_string, *, raise_on_unexpected=False):
             else:  # start-byte
                 if not is_in_multibyte:
                     assert multibytes_expected == 0
-                    assert len(multibyte_buffer) == 0
+                    assert not multibyte_buffer
                     while (code_point & 0x80) != 0:
                         multibytes_expected += 1
                         code_point <<= 1
@@ -52,7 +52,7 @@ def utf8_in_extended_ascii(input_string, *, raise_on_unexpected=False):
                     is_in_multibyte = True
                 else:
                     handle_bad_data(idx, c)
-                    
+
         if is_in_multibyte and len(multibyte_buffer) == multibytes_expected:  # output utf-8 character if complete
             utf_8_character = bytes(ord(x) for x in multibyte_buffer).decode("utf-8")
             output.append(utf_8_character)
@@ -60,16 +60,15 @@ def utf8_in_extended_ascii(input_string, *, raise_on_unexpected=False):
             is_in_multibyte = False
             multibytes_expected = 0
             mis_encoded_utf8_present = True
-        
+
     if multibyte_buffer:  # if we have left-over data
         handle_bad_data(len(input_string), "")
-    
+
     return mis_encoded_utf8_present, "".join(output)
 
 def timestampsconv(webkittime):
     unix_timestamp = webkittime + 978307200
-    finaltime = datetime.utcfromtimestamp(unix_timestamp)
-    return(finaltime)
+    return datetime.utcfromtimestamp(unix_timestamp)
 
 def get_biomeIntents(files_found, report_folder, seeker, wrap_text):
     

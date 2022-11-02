@@ -22,42 +22,32 @@ def get_icloudMeta(files_found, report_folder, seeker, wrap_text):
                     typee = (jsonconv[i].get('type', ''))
                     deleted= (jsonconv[i].get('deleted', ''))
                     mtime = (jsonconv[i].get('mtime', ''))
-                    if mtime > 0:
-                        mtime = datetime.datetime.fromtimestamp(mtime/1000)
-                    else:
-                        mtime = ''
+                    mtime = datetime.datetime.fromtimestamp(mtime/1000) if mtime > 0 else ''
                     ctime = (jsonconv[i].get('ctime', ''))
-                    if ctime > 0:
-                        ctime = datetime.datetime.fromtimestamp(ctime/1000)
-                    else:
-                        ctime = ''
+                    ctime = datetime.datetime.fromtimestamp(ctime/1000) if ctime > 0 else ''
                     btime = (jsonconv[i].get('btime', ''))
-                    if btime > 0:
-                        btime = datetime.datetime.fromtimestamp(btime/1000)
-                    else:
-                        btime = ''
+                    btime = datetime.datetime.fromtimestamp(btime/1000) if btime > 0 else ''
                     size = (jsonconv[i].get('size', ''))
                     zone = (jsonconv[i].get('zone', ''))
                     exe = (jsonconv[i]['file_flags'].get('is_executable', ''))
                     hid = (jsonconv[i]['file_flags'].get('is_hidden', ''))
-                    lasteditor = (jsonconv[i].get('last_editor_name', ''))
-                    if lasteditor:
+                    if lasteditor := (jsonconv[i].get('last_editor_name', '')):
                         lasteditorname = json.loads(jsonconv[i]['last_editor_name'])
                         lasteditorname = (lasteditorname.get('name', ''))
                     else:
                         lasteditorname = ''
                     basehash = (jsonconv[i].get('basehash', ''))
                     data_list.append((btime, ctime, mtime, name, lasteditorname, docid, parid, typee, deleted, size, zone, exe, hid))	
-            
-        
-            if len(data_list) > 0:
+
+
+            if data_list:
                 report = ArtifactHtmlReport('iCloud - File Metadata'+' '+str(counter))
                 report.start_artifact_report(report_folder, 'iCloud - File Metadata'+' '+str(counter))
                 report.add_script()
                 data_headers = ('Btime','Ctime','Mtime', 'Name', 'Last Editor Name', 'Doc ID', 'Parent ID', 'Type', 'Deleted?','Size', 'Zone', 'Executable?','Hidden?')   
                 report.write_artifact_data_table(data_headers, data_list, file_found, html_escape=False)
                 report.end_artifact_report()
-                
+
                 tsvname = 'iCloud - File Metadata'
                 tsv(report_folder, data_headers, data_list, tsvname)
             else:

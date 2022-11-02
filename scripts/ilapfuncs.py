@@ -33,7 +33,10 @@ class OutputParameters:
     def __init__(self, output_folder):
         now = datetime.datetime.now()
         currenttime = str(now.strftime('%Y-%m-%d_%A_%H%M%S'))
-        self.report_folder_base = os.path.join(output_folder, 'iLEAPP_Reports_' + currenttime) # aleapp , aleappGUI, ileap_artifacts, report.py
+        self.report_folder_base = os.path.join(
+            output_folder, f'iLEAPP_Reports_{currenttime}'
+        )
+
         self.temp_folder = os.path.join(self.report_folder_base, 'temp')
         OutputParameters.screen_output_file_path = os.path.join(self.report_folder_base, 'Script Logs', 'Screen Output.html')
         OutputParameters.screen_output_file_path_devinfo = os.path.join(self.report_folder_base, 'Script Logs', 'DeviceInfo.html')
@@ -81,13 +84,13 @@ def open_sqlite_db_readonly(path):
     '''Opens an sqlite db in read-only mode, so original db (and -wal/journal are intact)'''
     if is_platform_windows():
         if path.startswith('\\\\?\\UNC\\'): # UNC long path
-            path = "%5C%5C%3F%5C" + path[4:]
+            path = f"%5C%5C%3F%5C{path[4:]}"
         elif path.startswith('\\\\?\\'):    # normal long path
-            path = "%5C%5C%3F%5C" + path[4:]
+            path = f"%5C%5C%3F%5C{path[4:]}"
         elif path.startswith('\\\\'):       # UNC path
             path = "%5C%5C%3F%5C\\UNC" + path[1:]
-        else:                               # normal path
-            path = "%5C%5C%3F%5C" + path
+        else:                       # normal path
+            path = f"%5C%5C%3F%5C{path}"
     return sqlite3.connect (f"file:{path}?mode=ro", uri=True)
 
 def does_column_exist_in_db(db, table_name, col_name):
@@ -104,7 +107,6 @@ def does_column_exist_in_db(db, table_name, col_name):
                 return True
     except sqlite3.Error as ex:
         logfunc(f"Query error, query={query} Error={str(ex)}")
-        pass
     return False
 
 def does_table_exist(db, table_name):
@@ -112,7 +114,7 @@ def does_table_exist(db, table_name):
     try:
         query = f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'"
         cursor = db.execute(query)
-        for row in cursor:
+        for _ in cursor:
             return True
     except sqlite3Error as ex:
         logfunc(f"Query error, query={query} Error={str(ex)}")
@@ -132,28 +134,26 @@ class GuiWindow:
 def logfunc(message=""):
     with open(OutputParameters.screen_output_file_path, 'a', encoding='utf8') as a:
         print(message)
-        a.write(message + '<br>' + OutputParameters.nl)
+        a.write(f'{message}<br>{OutputParameters.nl}')
 
     if GuiWindow.window_handle:
         GuiWindow.window_handle.refresh()
 
 def logdevinfo(message=""):
     with open(OutputParameters.screen_output_file_path_devinfo, 'a', encoding='utf8') as b:
-        b.write(message + '<br>' + OutputParameters.nl)
+        b.write(f'{message}<br>{OutputParameters.nl}')
     
 def tsv(report_folder, data_headers, data_list, tsvname):
     report_folder = report_folder.rstrip('/')
     report_folder = report_folder.rstrip('\\')
     report_folder_base, tail = os.path.split(report_folder)
     tsv_report_folder = os.path.join(report_folder_base, '_TSV Exports')
-    
-    if os.path.isdir(tsv_report_folder):
-        pass
-    else:
+
+    if not os.path.isdir(tsv_report_folder):
         os.makedirs(tsv_report_folder)
-    
-    
-    with codecs.open(os.path.join(tsv_report_folder, tsvname +'.tsv'), 'a', 'utf-8-sig') as tsvfile:
+
+
+    with codecs.open(os.path.join(tsv_report_folder, f'{tsvname}.tsv'), 'a', 'utf-8-sig') as tsvfile:
         tsv_writer = csv.writer(tsvfile, delimiter='\t')
         tsv_writer.writerow(data_headers)
         for i in data_list:
@@ -171,7 +171,6 @@ def timeline(report_folder, tlactivity, data_list, data_headers):
         cursor = db.cursor()
         cursor.execute('''PRAGMA synchronous = EXTRA''')
         cursor.execute('''PRAGMA journal_mode = WAL''')
-        db.commit()
     else:
         os.makedirs(tl_report_folder)
         #create database
@@ -183,14 +182,18 @@ def timeline(report_folder, tlactivity, data_list, data_headers):
         CREATE TABLE data(key TEXT, activity TEXT, datalist TEXT)
         """
             )
-        db.commit()
-    
-    a = 0
+    db.commit()
     length = (len(data_list))
-    while a < length: 
-        modifiedList = list(map(lambda x, y: x.upper() + ': ' +  str(y), data_headers, data_list[a]))
+    for a in range(length): 
+        modifiedList = list(
+            map(
+                lambda x, y: f'{x.upper()}: {str(y)}',
+                data_headers,
+                data_list[a],
+            )
+        )
+
         cursor.executemany("INSERT INTO data VALUES(?,?,?)", [(str(data_list[a][0]), tlactivity.upper(), str(modifiedList))])
-        a += 1
     db.commit()
     db.close()
 
@@ -205,7 +208,6 @@ def kmlgen(report_folder, kmlactivity, data_list, data_headers):
         cursor = db.cursor()
         cursor.execute('''PRAGMA synchronous = EXTRA''')
         cursor.execute('''PRAGMA journal_mode = WAL''')
-        db.commit()
     else:
         os.makedirs(kml_report_folder)
         latlongdb = os.path.join(kml_report_folder, '_latlong.db')
@@ -216,24 +218,20 @@ def kmlgen(report_folder, kmlactivity, data_list, data_headers):
         CREATE TABLE data(key TEXT, latitude TEXT, longitude TEXT, activity TEXT)
         """
             )
-        db.commit()
-    
+    db.commit()
     kml = simplekml.Kml(open=1)
-    
-    a = 0
+
     length = (len(data_list))
-    while a < length:
+    for a in range(length):
         modifiedDict = dict(zip(data_headers, data_list[a]))
         times = modifiedDict.get('Timestamp','N/A')
         lon = modifiedDict['Longitude']
-        lat = modifiedDict['Latitude']
-        if lat:
+        if lat := modifiedDict['Latitude']:
             pnt = kml.newpoint()
             pnt.name = times
             pnt.description = f"Timestamp: {times} - {kmlactivity}"
             pnt.coords = [(lon, lat)]
             cursor.execute("INSERT INTO data VALUES(?,?,?,?)", (times, lat, lon, kmlactivity))
-        a += 1
     db.commit()
     db.close()
     kml.save(os.path.join(kml_report_folder, f'{kmlactivity}.kml'))
@@ -257,19 +255,17 @@ def generate_hexdump(data, char_per_row = 5):
     data_hex = binascii.hexlify(data).decode('utf-8')
     str_raw = strings_raw(data)
     str_hex = ''
-    str_ascii = ''
-
     ''' Generates offset column
     '''
     offset_rows = math.ceil(len(data_hex)/(char_per_row * 2))
-    offsets = [i for i in  range(0, len(data_hex), char_per_row)][:offset_rows]
+    offsets = list(range(0, len(data_hex), char_per_row))[:offset_rows]
     str_offset = '<br>'.join([ str(hex(s)[2:]).zfill(4).upper() for s in offsets ])
 
     ''' Generates hex data column
     '''
     c = 0
     for i in range(0, len(data_hex), 2):
-        str_hex += data_hex[i:i + 2] + '&nbsp;'
+        str_hex += f'{data_hex[i:i + 2]}&nbsp;'
 
         if c == char_per_row - 1:
             str_hex += '<br>'
@@ -279,8 +275,10 @@ def generate_hexdump(data, char_per_row = 5):
 
     ''' Generates ascii column of data
     '''
-    for i in range(0, len(str_raw), char_per_row):
-        str_ascii += str_raw[i:i + char_per_row] + '<br>'
+    str_ascii = ''.join(
+        f'{str_raw[i:i + char_per_row]}<br>'
+        for i in range(0, len(str_raw), char_per_row)
+    )
 
     return f'''
     <table id="GeoLocationHexTable" aria-describedby="GeoLocationHexTable" cellspacing="0">
@@ -304,52 +302,50 @@ searching for thumbnails, copy it to report folder and return tag  to insert in 
 '''
 def generate_thumbnail(imDirectory, imFilename, seeker, report_folder):
     thumb = thumbnail_root+imDirectory+'/'+imFilename+'/'
-    thumblist = seeker.search(thumb+'**.JPG', return_on_first_hit=True)
+    thumblist = seeker.search(f'{thumb}**.JPG', return_on_first_hit=True)
     thumbname = imDirectory.replace('/','_')+'_'+imFilename+'.JPG'
     pathToThumb = os.path.join(os.path.basename(os.path.abspath(report_folder)), thumbname)
     htmlThumbTag = '<img src="{0}"></img>'.format(pathToThumb)
     if thumblist:
         shutil.copyfile(thumblist[0],os.path.join(report_folder, thumbname))
-    else:
-        #recreate thumbnail from image
-        #TODO: handle videos and HEIC
-        files = seeker.search(media_root+imDirectory+'/'+imFilename, return_on_first_hit=True)
-        if files:
-            try:
-                im = Image.open(files[0])
-                im.thumbnail(thumb_size)
-                im.save(os.path.join(report_folder, thumbname))
-            except:
-                pass #unsupported format
+    elif files := seeker.search(
+        media_root + imDirectory + '/' + imFilename, return_on_first_hit=True
+    ):
+        try:
+            im = Image.open(files[0])
+            im.thumbnail(thumb_size)
+            im.save(os.path.join(report_folder, thumbname))
+        except:
+            pass #unsupported format
     return htmlThumbTag
 
 def media_to_html(media_path, files_found, report_folder):
 
     def media_path_filter(name):
         return media_path in name
-    
+
     def relative_paths(source, splitter):
         splitted_a = source.split(splitter)
         for x in splitted_a:
             if 'LEAPP_Reports_' in x:
                 report_folder = x
-                
+
         splitted_b = source.split(report_folder)
-        return '.'+ splitted_b[1]
-    
+        return f'.{splitted_b[1]}'
+
     platform = is_platform_windows()
     if platform:
         media_path = media_path.replace('/', '\\')
         splitter = '\\'
     else:
         splitter = '/'
-        
+
     thumb = media_path
     for match in filter(media_path_filter, files_found):
         filename = os.path.basename(match)
         if filename.startswith('~') or filename.startswith('._'):
             continue
-        
+
         dirs = os.path.dirname(report_folder)
         dirs = os.path.dirname(dirs)
         env_path = os.path.join(dirs, 'temp')
@@ -366,7 +362,7 @@ def media_to_html(media_path, files_found, report_folder):
             shutil.copy2(match, locationfiles)
             source = Path(locationfiles, filename)
             source = relative_paths(str(source), splitter)
-                
+
         mimetype = magic.from_file(match, mime = True)
 
         if 'video' in mimetype:

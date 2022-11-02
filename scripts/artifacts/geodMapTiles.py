@@ -14,14 +14,12 @@ def ReadVLOC(data):
     total_len = len(data)
     pos = 8
     while pos < total_len:
-        if data[pos] < 0x80:
-            skip_len = 2
-        else:
-            skip_len = 3
+        skip_len = 2 if data[pos] < 0x80 else 3
         end_pos = data[pos+skip_len:].find(b'\0')
         if end_pos >= 0:
-            name = data[pos + skip_len : pos + skip_len + end_pos].decode('utf8', 'ignore')
-            if name:
+            if name := data[pos + skip_len : pos + skip_len + end_pos].decode(
+                'utf8', 'ignore'
+            ):
                 names.append(name)
             pos += skip_len + end_pos + 1
         else:
@@ -34,13 +32,12 @@ def ParseTCOL(data):
     data_size = len(data)
     if data_size >=8:
         tcol_data_offset = struct.unpack('<I', data[4:8])[0]
-        tcol_compressed_data = data[tcol_data_offset:]
-        if tcol_compressed_data:
+        if tcol_compressed_data := data[tcol_data_offset:]:
             try:
                 tcol_places = gzip.decompress(tcol_compressed_data)
                 #print("VLOC ->", tcol_places)
             except (OSError, EOFError, zlib.error) as ex:
-                logfunc('Gzip decompression error from ParseTCOL() - ' + str(ex))
+                logfunc(f'Gzip decompression error from ParseTCOL() - {str(ex)}')
                 tcol_places = ''
         vmp4_places = ParseVMP4(data[8:tcol_data_offset])
         return vmp4_places, ReadVLOC(tcol_places)
@@ -57,7 +54,7 @@ def ParseVMP4(data):
                 try:
                     places_data = zlib.decompress(compressed_data)
                 except zlib.error as ex:
-                    logfunc('Zlib decompression error from ParseVMP4() - ' + str(ex))
+                    logfunc(f'Zlib decompression error from ParseVMP4() - {str(ex)}')
                     places_data = ''
             else:
                 places_data = item_data[1:]
@@ -67,23 +64,21 @@ def ParseVMP4(data):
     return []
 
 def get_hex(num):
-    if num:
-        return hex(num).upper()
-    return ''
+    return hex(num).upper() if num else ''
 
 def get_geodMapTiles(files_found, report_folder, seeker, wrap_text):
     for file_found in files_found:
         file_found = str(file_found)
-        
+
         if file_found.endswith('.sqlitedb'):
             break
-        
+
     #os.chmod(file_found, 0o0777)
     db = open_sqlite_db_readonly(file_found)
     db.row_factory = sqlite3.Row
     cursor = db.cursor()
     usesDataTable = True
-    
+
     if does_table_exist(db, 'data'):
         logfunc('Parsing Geolocation from data table.')        
         query = '''
@@ -108,8 +103,7 @@ def get_geodMapTiles(files_found, report_folder, seeker, wrap_text):
             tcol_places = ''
             vmp4_places = ''
             data_parsed = ''
-            data = row['data']
-            if data: # NULL sometimes
+            if data := row['data']:
                 if len(data) >= 11 and data[:11] == b'\xff\xd8\xff\xe0\x00\x10\x4a\x46\x49\x46\x00':
                     img_base64 = base64.b64encode(data).decode('utf-8')
                     img_html = f'<img src="data:image/jpeg;base64, {img_base64}" alt="Map Tile" />'
@@ -121,11 +115,6 @@ def get_geodMapTiles(files_found, report_folder, seeker, wrap_text):
                 elif len(data) >=4 and data[:4] == b'VMP4':
                     vmp4_places = ParseVMP4(data)
                     vmp4_places = ", ".join(vmp4_places)
-            #else:
-                #header_bytes = data[:28]
-                #hexdump = generate_hexdump(header_bytes, 5) if header_bytes else ''
-                #data_parsed = hexdump
-
             if usesDataTable:
                 data_list.append((row['timestamp'], tcol_places, vmp4_places, data_parsed, get_hex(row['tileset']), 
                                     get_hex(row['key_a']), get_hex(row['key_b']), get_hex(row['key_c']), get_hex(row['key_d'])) )
@@ -145,7 +134,7 @@ def get_geodMapTiles(files_found, report_folder, seeker, wrap_text):
 
         tsvname = 'Geolocation Map Tiles'
         tsv(report_folder, data_headers, data_list, tsvname)
-        
+
         tlactivity = 'Geolocation Map tiles'
         timeline(report_folder, tlactivity, data_list, data_headers)
 

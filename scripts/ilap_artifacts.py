@@ -219,28 +219,31 @@ def process_artifact(files_found, artifact_func, artifact_name, seeker, report_f
             seeker: FileSeeker object to pass to method
     '''
     start_time = process_time()
-    logfunc('{} [{}] artifact executing'.format(artifact_name, artifact_func))
+    logfunc(f'{artifact_name} [{artifact_func}] artifact executing')
     report_folder = os.path.join(report_folder_base, artifact_name) + slash
     try:
-        if os.path.isdir(report_folder):
-            pass
-        else:
+        if not os.path.isdir(report_folder):
             os.makedirs(report_folder)
     except Exception as ex:
-        logfunc('Error creating {} report directory at path {}'.format(artifact_name, report_folder))
-        logfunc('Reading {} artifact failed!'.format(artifact_name))
-        logfunc('Error was {}'.format(str(ex)))
+        logfunc(
+            f'Error creating {artifact_name} report directory at path {report_folder}'
+        )
+
+        logfunc(f'Reading {artifact_name} artifact failed!')
+        logfunc(f'Error was {str(ex)}')
         return
     try:
-        method = globals()['get_' + artifact_func]
+        method = globals()[f'get_{artifact_func}']
         method(files_found, report_folder, seeker, wrap_text)
     except Exception as ex:
-        logfunc('Reading {} artifact had errors!'.format(artifact_name))
-        logfunc('Error was {}'.format(str(ex)))
-        logfunc('Exception Traceback: {}'.format(traceback.format_exc()))
+        logfunc(f'Reading {artifact_name} artifact had errors!')
+        logfunc(f'Error was {str(ex)}')
+        logfunc(f'Exception Traceback: {traceback.format_exc()}')
         return
 
     end_time = process_time()
     run_time_secs = end_time - start_time
     # run_time_HMS = strftime('%H:%M:%S', gmtime(run_time_secs))
-    logfunc('{} [{}] artifact completed in time {} seconds'.format(artifact_name, artifact_func, run_time_secs))
+    logfunc(
+        f'{artifact_name} [{artifact_func}] artifact completed in time {run_time_secs} seconds'
+    )

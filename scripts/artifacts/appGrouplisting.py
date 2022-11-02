@@ -8,7 +8,7 @@ from scripts.ilapfuncs import logfunc, tsv, is_platform_windows
 
 
 def get_appGrouplisting(files_found, report_folder, seeker, wrap_text):
-    data_list = []       
+    data_list = []
     for file_found in files_found:
         file_found = str(file_found)
         with open(file_found, "rb") as fp:
@@ -17,15 +17,15 @@ def get_appGrouplisting(files_found, report_folder, seeker, wrap_text):
             else:
                 plist = biplist.readPlist(fp)
             bundleid = plist['MCMMetadataIdentifier']
-            
+
             p = pathlib.Path(file_found)
             appgroupid = p.parent.name
             fileloc = str(p.parents[1])
             typedir = str(p.parents[1].name)
-            
+
             data_list.append((bundleid, typedir, appgroupid, fileloc))
-        
-    if len(data_list) > 0:
+
+    if data_list:
         filelocdesc = 'Path column in the report'
         description = 'List can included once installed but not present apps. Each file is named .com.apple.mobile_container_manager.metadata.plist'
         report = ArtifactHtmlReport('Bundle ID by AppGroup & PluginKit IDs')
@@ -34,7 +34,7 @@ def get_appGrouplisting(files_found, report_folder, seeker, wrap_text):
         data_headers = ('Bundle ID','Type','Directory GUID','Path')     
         report.write_artifact_data_table(data_headers, data_list, filelocdesc)
         report.end_artifact_report()
-        
+
         tsvname = 'Bundle ID - AppGroup ID - PluginKit ID'
         tsv(report_folder, data_headers, data_list, tsvname)
     else:

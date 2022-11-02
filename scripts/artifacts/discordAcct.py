@@ -30,16 +30,10 @@ def get_discordAcct(files_found, report_folder, seeker, wrap_text):
 	searchlist = []
 	for file_found in files_found:
 		file_found = str(file_found)
-		
-		for s in strings(file_found):
-			#print(type(s))
-			#print(s)
-			searchlist.append(str(s),)
 
-		counter = 0
+		searchlist.extend(str(s) for s in strings(file_found))
 		data_list = []
-		for x in searchlist:
-			counter += 1
+		for counter, x in enumerate(searchlist, start=1):
 			if 'user_id_cache' in x:
 				#print(x)
 				wf = searchlist[counter].split('"')
@@ -47,7 +41,7 @@ def get_discordAcct(files_found, report_folder, seeker, wrap_text):
 					data_list.append(('USER_ID_CACHE', wf[1]))
 				except:
 					pass
-				
+
 			if 'email_cache' in x:
 				#print(x)
 				wfa = searchlist[counter].split('"')
@@ -63,7 +57,7 @@ def get_discordAcct(files_found, report_folder, seeker, wrap_text):
 		data_headers = ('Key', 'Value')   
 		report.write_artifact_data_table(data_headers, data_list, file_found)
 		report.end_artifact_report()
-		
+
 		tsvname = 'Discord Account'
 		tsv(report_folder, data_headers, data_list, tsvname)
 

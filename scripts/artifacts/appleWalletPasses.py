@@ -9,14 +9,13 @@ from scripts.ilapfuncs import logfunc, tsv, timeline, open_sqlite_db_readonly
 
 
 def get_appleWalletPasses(files_found, report_folder, seeker, wrap_text):
-    data_list = []
     all_rowsc = 0
     for file_found in files_found:
         file_found = str(file_found)
 
         if file_found.endswith('json'):
             unique_id = search(r'(?<=ards/)(.*?)(?=.pkpass)', dirname(file_found), flags=DOTALL).group(0)
-            filename = '{}_{}'.format(unique_id, basename(file_found))
+            filename = f'{unique_id}_{basename(file_found)}'
             shutil.copyfile(file_found, join(report_folder, filename))
 
         json_files = [join(report_folder, file) for file in listdir(report_folder) if isfile(join(report_folder, file))]
@@ -35,6 +34,7 @@ def get_appleWalletPasses(files_found, report_folder, seeker, wrap_text):
             db_file = file_found
 
     if all_rowsc > 0:
+        data_list = []
         for row in all_rows:
             for json_file in json_files:
                 if row[0] in basename(json_file):

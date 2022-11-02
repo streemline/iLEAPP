@@ -27,9 +27,25 @@ def get_appleWalletTransactions(files_found, report_folder, seeker, wrap_text):
     all_rows = cursor.fetchall()
     usageentries = len(all_rows)
     if usageentries > 0:
-        data_list = []
-        for row in all_rows:
-            data_list.append((row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13]))
+        data_list = [
+            (
+                row[0],
+                row[1],
+                row[2],
+                row[3],
+                row[4],
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9],
+                row[10],
+                row[11],
+                row[12],
+                row[13],
+            )
+            for row in all_rows
+        ]
 
         report = ArtifactHtmlReport('Transactions')
         report.start_artifact_report(report_folder, 'Transactions')

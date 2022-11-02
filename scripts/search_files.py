@@ -40,21 +40,26 @@ class FileSeekerDir(FileSeekerBase):
                 if item.is_dir(follow_symlinks=False):
                     self.build_files_list(item.path)
         except Exception as ex:
-            logfunc(f'Error reading {directory} ' + str(ex))
+            logfunc(f'Error reading {directory} {str(ex)}')
 
     def search(self, filepattern, return_on_first_hit=False):
         pat = _compile_pattern( normcase(filepattern) )
         root = normcase("root/")
         if return_on_first_hit:
-            for item in self._all_files:
-                if pat( root + normcase(item) ) is not None:
-                    return [item]
-            return []
-        pathlist = []
-        for item in self._all_files:
-            if pat( root + normcase(item) ) is not None:
-                pathlist.append(item)
-        return pathlist
+            return next(
+                (
+                    [item]
+                    for item in self._all_files
+                    if pat(root + normcase(item)) is not None
+                ),
+                [],
+            )
+
+        return [
+            item
+            for item in self._all_files
+            if pat(root + normcase(item)) is not None
+        ]
 
 class FileSeekerItunes(FileSeekerBase):
     def __init__(self, directory, temp_folder):
@@ -89,7 +94,7 @@ class FileSeekerItunes(FileSeekerBase):
                 self._all_files[relative_path] = hash_filename
             db.close()
         except Exception as ex:
-            logfunc(f'Error opening Manifest.db from {directory}, ' + str(ex))
+            logfunc(f'Error opening Manifest.db from {directory}, {str(ex)}')
             raise ex
 
     def search(self, filepattern, return_on_first_hit=False):
@@ -106,7 +111,7 @@ class FileSeekerItunes(FileSeekerBase):
                 copyfile(original_location, temp_location)
                 pathlist.append(temp_location)
             except Exception as ex:
-                logfunc(f'Could not copy {original_location} to {temp_location} ' + str(ex))
+                logfunc(f'Could not copy {original_location} to {temp_location} {str(ex)}')
         return pathlist
 
 class FileSeekerTar(FileSeekerBase):
@@ -139,7 +144,10 @@ class FileSeekerTar(FileSeekerBase):
                         os.utime(full_path, (member.mtime, member.mtime))
                     pathlist.append(full_path)
                 except Exception as ex:
-                    logfunc(f'Could not write file to filesystem, path was {member.name} ' + str(ex))
+                    logfunc(
+                        f'Could not write file to filesystem, path was {member.name} {str(ex)}'
+                    )
+
         return pathlist
 
     def cleanup(self):
@@ -168,7 +176,7 @@ class FileSeekerZip(FileSeekerBase):
                     pathlist.append(extracted_path)
                 except Exception as ex:
                     member = member.lstrip("/")
-                    logfunc(f'Could not write file to filesystem, path was {member} ' + str(ex))
+                    logfunc(f'Could not write file to filesystem, path was {member} {str(ex)}')
         return pathlist
 
     def cleanup(self):

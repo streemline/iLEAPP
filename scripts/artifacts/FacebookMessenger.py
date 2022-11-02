@@ -11,7 +11,7 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
         file_found = str(file_found)
         if not file_found.endswith('.db'):
             continue # Skip all other files
-    
+
         db = open_sqlite_db_readonly(file_found)
         cursor = db.cursor()
         cursor.execute('''
@@ -45,21 +45,31 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Facebook Messenger - Chats')
             report.add_script()
             data_headers = ('Timestamp','Sender Name','Sender ID','Message','Attachment','Attachment Name','Attachment Size','Title Text') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4],row[5],row[6],row[7]))
+            data_list = [
+                (
+                    row[0],
+                    row[1],
+                    row[2],
+                    row[3],
+                    row[4],
+                    row[5],
+                    row[6],
+                    row[7],
+                )
+                for row in all_rows
+            ]
 
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Facebook Messenger - Chats'
+
+            tsvname = 'Facebook Messenger - Chats'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Facebook Messenger - Chats'
+
+            tlactivity = 'Facebook Messenger - Chats'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('No Facebook Messenger - Chats data available')
-        
+
         cursor.execute('''
         select
         datetime(thread_messages.timestamp_ms/1000,'unixepoch') as Timestamp,
@@ -83,21 +93,18 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Facebook Messenger - Calls')
             report.add_script()
             data_headers = ('Timestamp','Sender Name','Sender ID','Call Type','Call Duration/Subtitle') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4]))
-
+            data_list = [(row[0],row[1],row[2],row[3],row[4]) for row in all_rows]
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Facebook Messenger - Calls'
+
+            tsvname = 'Facebook Messenger - Calls'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Facebook Messenger - Calls'
+
+            tlactivity = 'Facebook Messenger - Calls'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('No Facebook Messenger - Calls data available')
-        
+
         cursor.execute('''
         select
         id,
@@ -118,21 +125,18 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Facebook Messenger - Contacts')
             report.add_script()
             data_headers = ('User ID','Username','Normalized Username','Profile Pic URL','Is App User') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4]))
-
+            data_list = [(row[0],row[1],row[2],row[3],row[4]) for row in all_rows]
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Facebook Messenger - Contacts'
+
+            tsvname = 'Facebook Messenger - Contacts'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Facebook Messenger - Contacts'
+
+            tlactivity = 'Facebook Messenger - Contacts'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('No Facebook Messenger - Contacts data available')
-            
+
         cursor.execute('''
         select
         datetime(secure_messages.timestamp_ms/1000,'unixepoch') as 'Timestamp',
@@ -152,21 +156,18 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Facebook Messenger - Secret Conversation')
             report.add_script()
             data_headers = ('Timestamp','Thread Key','Sender Name','Message (Encrypted)', 'Attachment (Encrypted)') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2],row[3],row[4]))
-
+            data_list = [(row[0],row[1],row[2],row[3],row[4]) for row in all_rows]
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Facebook Messenger - Secret Conversation'
+
+            tsvname = 'Facebook Messenger - Secret Conversation'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Facebook Messenger - Secret Conversation'
+
+            tlactivity = 'Facebook Messenger - Secret Conversation'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('No Facebook Messenger - Secret Conversation data available')
-        
+
         cursor.execute('''
         select
         datetime(threads.last_activity_timestamp_ms/1000,'unixepoch'),
@@ -185,21 +186,18 @@ def get_FacebookMessenger(files_found, report_folder, seeker, wrap_text):
             report.start_artifact_report(report_folder, 'Facebook Messenger - Conversation Groups')
             report.add_script()
             data_headers = ('Timestamp (Last Activity)','Thread Key','Thread Participants') # Don't remove the comma, that is required to make this a tuple as there is only 1 element
-            data_list = []
-            for row in all_rows:
-                data_list.append((row[0],row[1],row[2]))
-
+            data_list = [(row[0],row[1],row[2]) for row in all_rows]
             report.write_artifact_data_table(data_headers, data_list, file_found)
             report.end_artifact_report()
-            
-            tsvname = f'Facebook Messenger - Conversation Groups'
+
+            tsvname = 'Facebook Messenger - Conversation Groups'
             tsv(report_folder, data_headers, data_list, tsvname)
-            
-            tlactivity = f'Facebook Messenger - Conversation Groups'
+
+            tlactivity = 'Facebook Messenger - Conversation Groups'
             timeline(report_folder, tlactivity, data_list, data_headers)
         else:
             logfunc('No Facebook Messenger - Conversation Groups data available')
-        
+
         db.close()
         return
 

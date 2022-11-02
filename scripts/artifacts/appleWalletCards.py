@@ -27,15 +27,13 @@ def get_appleWalletCards(files_found, report_folder, seeker, wrap_text):
         for row in all_rows:
             card_info = str(row[1], 'utf-8', 'ignore')
             card_number = get_bank_card_number(card_info)
-            if card_number is None:
-                pass
-            else:
+            if card_number is not None:
                 expiration_date = re.findall(r'\d{2}/\d{2}', card_info)
                 card_type = get_card_type(card_number, len(card_number))
 
                 data_list.append((row[0], card_number, expiration_date[0], card_type))
-                
-    if len(data_list) > 0:
+
+    if data_list:
         report = ArtifactHtmlReport('Cards')
         report.start_artifact_report(report_folder, 'Cards')
         report.add_script()
@@ -59,8 +57,9 @@ def get_bank_card_number(card_information):
     num_of_digits = [19, 18, 17, 16, 15, 14, 13]
 
     for digit_num in num_of_digits:
-        found_entry = re.findall(r'\d{{{digits}}}'.format(digits=digit_num), card_information)
-        if found_entry:
+        if found_entry := re.findall(
+            r'\d{{{digits}}}'.format(digits=digit_num), card_information
+        ):
             return found_entry[0]
 
 
@@ -68,15 +67,15 @@ def get_card_type(card_num, num_length):
     first_digit = str(card_num)[:1]
     first_two_digits = str(card_num)[:2]
 
-    if first_digit == '4' and (num_length == 13 or num_length == 16):
+    if first_digit == '4' and num_length in [13, 16]:
         return 'Visa'
     elif first_digit == '5' and num_length == 16:
         return 'Mastercard'
     elif first_digit == '6' and num_length == 16:
         return 'Discover'
-    elif (first_two_digits == '34' or first_two_digits == '37') and num_length == 15:
+    elif first_two_digits in ['34', '37'] and num_length == 15:
         return 'American Express'
-    elif (first_two_digits == '30' or first_two_digits == '36' or first_two_digits == '38') and num_length == 14:
+    elif first_two_digits in ['30', '36', '38'] and num_length == 14:
         return 'Diners Club Carte Blanche'
     else:
         return 'Unknown'

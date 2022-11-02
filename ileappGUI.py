@@ -30,23 +30,25 @@ def ValidateInput(values, window):
         ext_type = 'itunes'
     elif os.path.isdir(i_path):
         ext_type = 'fs'
-    else: # must be an existing file then
-        if not i_path.lower().endswith('.tar') and not i_path.lower().endswith('.zip') and not i_path.lower().endswith('.gz'):
-            sg.PopupError('Input file is not a supported archive! ', i_path)
-            return False, ext_type
-        else:
-            ext_type = Path(i_path).suffix[1:].lower() 
-    
+    elif (
+        i_path.lower().endswith('.tar')
+        or i_path.lower().endswith('.zip')
+        or i_path.lower().endswith('.gz')
+    ):
+        ext_type = Path(i_path).suffix[1:].lower() 
+
+    else:
+        sg.PopupError('Input file is not a supported archive! ', i_path)
+        return False, ext_type
     # check output now
     if len(o_path) == 0 : # output folder
         sg.PopupError('No OUTPUT folder selected!')
         return False, ext_type
 
-    one_element_is_selected = False
-    for x in range(1000, module_end_index):
-        if window.FindElement(x).Get():
-            one_element_is_selected = True
-            break
+    one_element_is_selected = any(
+        window.FindElement(x).Get() for x in range(1000, module_end_index)
+    )
+
     if not one_element_is_selected:
         sg.PopupError('No module selected for processing!')
         return False, ext_type
@@ -55,10 +57,7 @@ def ValidateInput(values, window):
 
 # initialize CheckBox control with module name   
 def CheckList(mtxt, lkey, mdstring, disable=False):
-    if mdstring == 'photosMetadata' or mdstring == 'journalStrings' or mdstring == 'walStrings': #items in the if are modules that take a long time to run. Deselects them by default.
-        dstate = False
-    else:
-        dstate = True
+    dstate = mdstring not in ['photosMetadata', 'journalStrings', 'walStrings']
     return [sg.CBox(mtxt, default=dstate, key=lkey, metadata=mdstring, disabled=disable)]
 
 def pickModules():
@@ -112,7 +111,7 @@ layout = [  [sg.Text('iOS Logs, Events, And Plists Parser', font=("Helvetica", 2
             [sg.Column(mlist, size=(300,310), scrollable=True),  sg.Output(size=(85,20))] ,
             [sg.ProgressBar(max_value=GuiWindow.progress_bar_total, orientation='h', size=(86, 7), key='PROGRESSBAR', bar_color=('DarkGreen', 'White'))],
             [sg.Submit('Process', font=normal_font), sg.Button('Close', font=normal_font)] ]
-            
+
 # Create the Window
 window = sg.Window(f'iLEAPP version {aleapp_version}', layout)
 GuiWindow.progress_bar_handle = window['PROGRESSBAR']
@@ -130,14 +129,15 @@ while True:
     if event == "DESELECT ALL":  
          # none modules
         for x in range(MODULE_START_INDEX, module_end_index):
-            window[x].Update(False if window[x].metadata != 'lastBuild' else True)  # lastBuild.py is REQUIRED
+            window[x].Update(window[x].metadata == 'lastBuild')
     if event == "SAVE PROFILE":
-        destination_path = sg.popup_get_file(
-            "Save a profile", save_as=True,
+        if destination_path := sg.popup_get_file(
+            "Save a profile",
+            save_as=True,
             file_types=(('ALEAPP Profile (*.alprofile)', '*.alprofile'),),
-            default_extension='.alprofile', no_window=True)
-
-        if destination_path:
+            default_extension='.alprofile',
+            no_window=True,
+        ):
             ticked = []
             for x in range(MODULE_START_INDEX, module_end_index):
                 if window.FindElement(x).Get():
@@ -163,9 +163,10 @@ while True:
 
             if not profile_load_error:
                 if isinstance(profile, dict):
-                    if profile.get("leapp") != "aleapp" or profile.get("format_version") != 1:
-                        profile_load_error = "File was not a valid profile file: incorrect LEAPP or version"
-                    else:
+                    if (
+                        profile.get("leapp") == "aleapp"
+                        and profile.get("format_version") == 1
+                    ):
                         ticked = set(profile.get("plugins", []))
                         ticked.add("lastbuild")  # always
                         for x in range(MODULE_START_INDEX, module_end_index):
@@ -173,6 +174,8 @@ while True:
                                 window[x].update(True)
                             else:
                                 window[x].update(False)
+                    else:
+                        profile_load_error = "File was not a valid profile file: incorrect LEAPP or version"
                 else:
                     profile_load_error = "File was not a valid profile file: invalid format"
 
@@ -206,7 +209,7 @@ while True:
                     if key in loader and key != 'lastbuild':
                         search_list.append(loader[key])
                     s_items = s_items + 1 # for progress bar
-                
+
                 # no more selections allowed
                 window[x].Update(disabled=True)
 
@@ -216,18 +219,24 @@ while True:
             GuiWindow.window_handle = window
             out_params = OutputParameters(output_folder)
             wrap_text = True
-            crunch_successful = ileapp.crunch_artifacts(
-                search_list, extracttype, input_path, out_params, len(loader)/s_items, wrap_text, loader)
-            if crunch_successful:
+            if crunch_successful := ileapp.crunch_artifacts(
+                search_list,
+                extracttype,
+                input_path,
+                out_params,
+                len(loader) / s_items,
+                wrap_text,
+                loader,
+            ):
                 report_path = os.path.join(out_params.report_folder_base, 'index.html')
-                
+
                 if report_path.startswith('\\\\?\\'): # windows
                     report_path = report_path[4:]
                 if report_path.startswith('\\\\'): # UNC path
                     report_path = report_path[2:]
-                locationmessage = 'Report name: ' + report_path
+                locationmessage = f'Report name: {report_path}'
                 sg.Popup('Processing completed', locationmessage)
-                webbrowser.open_new_tab('file://' + report_path)
+                webbrowser.open_new_tab(f'file://{report_path}')
             else:
                 log_path = out_params.screen_output_file_path
                 if log_path.startswith('\\\\?\\'): # windows

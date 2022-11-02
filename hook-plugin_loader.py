@@ -17,7 +17,7 @@ for py_file in plugin_loader.PLUGINPATH.glob("*.py"):
     except AttributeError:
         pass  # any unconverted plugins still get checked out so they don't break the loader during runtime
 
-    tmp.append("scripts.artifacts." + mod.__name__)  # TODO this is a hack, if we ever move plugins this breaks
+    tmp.append(f"scripts.artifacts.{mod.__name__}")
 
 print(f"{len(tmp)} plugins loaded as hidden imports")
 
